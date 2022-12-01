@@ -1,4 +1,5 @@
 use std::fs;
+use itertools::Itertools;
 
 fn main() {
     let input = fs::read_to_string("resources/input.txt").expect("Could not read file");
@@ -6,12 +7,30 @@ fn main() {
 }
 
 fn execute(input: String) -> usize {
-    1
+    input
+        .split("\n\n")
+        .map(|l| l.split("\n").map(|i| i.parse::<i32>()).filter_map(Result::ok).sum::<i32>())
+        .sorted()
+        .last().unwrap() as usize
 }
 
 #[test]
 fn test_data() {
     assert_eq!(execute(r"
-".to_string()), 0);
+1000
+2000
+3000
+
+4000
+
+5000
+6000
+
+7000
+8000
+9000
+
+10000
+".to_string()), 24000);
 }
 
