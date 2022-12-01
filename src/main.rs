@@ -9,8 +9,13 @@ fn main() {
 fn execute(input: String) -> usize {
     input
         .split("\n\n")
-        .map(|l| l.split("\n").map(|i| i.parse::<i32>()).filter_map(Result::ok).sum::<i32>())
-        .sorted().rev().take(3).sum::<i32>() as usize
+        .map(|l| l.split("\n")
+            .map(|i| i.parse::<i32>())
+            .filter_map(Result::ok)
+            .sum::<i32>())
+        .sorted().rev()
+        .take(3)
+        .sum::<i32>() as usize
 }
 
 #[test]
