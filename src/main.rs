@@ -10,8 +10,7 @@ fn execute(input: String) -> usize {
     input
         .split("\n\n")
         .map(|l| l.split("\n").map(|i| i.parse::<i32>()).filter_map(Result::ok).sum::<i32>())
-        .sorted()
-        .last().unwrap() as usize
+        .sorted().rev().take(3).sum::<i32>() as usize
 }
 
 #[test]
@@ -31,6 +30,6 @@ fn test_data() {
 9000
 
 10000
-".to_string()), 24000);
+".to_string()), 45000);
 }
 
