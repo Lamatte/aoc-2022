@@ -1,13 +1,73 @@
-use std::cmp::Ordering;
-use std::cmp::Ordering::{Equal, Greater, Less};
 use std::fs;
+use std::str::FromStr;
+use crate::Move::{Paper, Rock, Scissors};
+use crate::PlayResult::{Draw, Lose, Win};
 
-const ROCK: &'static str = "A";
-const PAPER: &'static str = "B";
-const SCISSORS: &'static str = "C";
+#[derive(Debug, Copy, Clone, PartialEq)]
+enum Move {
+    Rock,
+    Paper,
+    Scissors,
+}
 
-const LOSE: &'static str = "X";
-const WIN: &'static str = "Z";
+#[derive(Debug, Copy, Clone)]
+enum PlayResult {
+    Win,
+    Draw,
+    Lose,
+}
+
+impl Move {
+    fn score(&self) -> i32 {
+        match self {
+            Rock => 1,
+            Paper => 2,
+            Scissors => 3
+        }
+    }
+}
+
+impl FromStr for Move {
+    type Err = String;
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        if value == "A" {
+            Ok(Rock)
+        } else if value == "B" {
+            Ok(Paper)
+        } else if value == "C" {
+            Ok(Scissors)
+        } else {
+            Err(format!("Bad value for a move: {}", value.to_string()))
+        }
+    }
+}
+
+impl PlayResult {
+    fn score(&self) -> i32 {
+        match self {
+            Lose => 0,
+            Draw => 3,
+            Win => 6
+        }
+    }
+}
+
+impl FromStr for PlayResult {
+    type Err = String;
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        if value == "X" {
+            Ok(Lose)
+        } else if value == "Y" {
+            Ok(Draw)
+        } else if value == "Z" {
+            Ok(Win)
+        } else {
+            Err(format!("Bad value for a play result: {}", value.to_string()))
+        }
+    }
+}
 
 fn main() {
     let input = fs::read_to_string("resources/input.txt").expect("Could not read file");
@@ -19,57 +79,25 @@ fn execute(input: String) -> usize {
         .split("\n")
         .map(|s| s.split(" ").collect::<Vec<&str>>())
         .filter(|values| values.len() == 2)
-        .map(|values| (my_expected_move(values[1], values[0]), values[0]))
-        .map(|(my_move, opponent_move)| score(my_move, opponent_move))
+        .map(|values| (values[0].parse::<Move>().unwrap(), values[1].parse::<PlayResult>().unwrap()))// Should filter here...
+        .map(|(opponent_move, result)| (my_expected_move(result, opponent_move), result))
+        .map(|(my_move, result)| my_move.score() + result.score())
         .sum::<i32>() as usize
 }
 
-// Boooh!!
-fn my_expected_move<'a>(expected_result: &'a str, opponent_move: &'a str) -> &'a str {
-    if expected_result == LOSE {
-        if opponent_move == ROCK {
-            SCISSORS
-        } else if opponent_move == PAPER {
-            ROCK
-        } else {
-            PAPER
+fn my_expected_move(expected_result: PlayResult, opponent_move: Move) -> Move {
+    match expected_result {
+        Win => match opponent_move {
+            Rock => Paper,
+            Paper => Scissors,
+            Scissors => Rock
         }
-    } else if expected_result == WIN {
-        if opponent_move == ROCK {
-            PAPER
-        } else if opponent_move == PAPER {
-            SCISSORS
-        } else {
-            ROCK
+        Draw => opponent_move,
+        Lose => match opponent_move {
+            Rock => Scissors,
+            Paper => Rock,
+            Scissors => Paper
         }
-    } else { // DRAWN
-        opponent_move
-    }
-}
-
-fn score(my_move: &str, opponent_move: &str) -> i32 {
-    move_score(my_move) + match_score(my_move, opponent_move)
-}
-
-fn move_score(my_move: &str) -> i32 {
-    if my_move == ROCK {
-        1
-    } else if my_move == PAPER {
-        2
-    } else {
-        3
-    }
-}
-
-fn match_score(my_move: &str, opponent_move: &str) -> i32 {
-    if my_move == opponent_move {
-        3
-    } else if (my_move == ROCK && opponent_move == PAPER)
-        || (my_move == PAPER && opponent_move == SCISSORS)
-        || (my_move == SCISSORS && opponent_move == ROCK){
-        0
-    } else {
-        6
     }
 }
 
