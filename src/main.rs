@@ -1,5 +1,12 @@
 use std::fs;
 
+const ROCK: &'static str = "A";
+const PAPER: &'static str = "B";
+const SCISSORS: &'static str = "C";
+
+const LOSE: &'static str = "X";
+const WIN: &'static str = "Z";
+
 fn main() {
     let input = fs::read_to_string("resources/input.txt").expect("Could not read file");
     eprintln!("{}", execute(input));
@@ -10,29 +17,53 @@ fn execute(input: String) -> usize {
         .split("\n")
         .map(|s| s.split(" ").collect::<Vec<&str>>())
         .filter(|values| values.len() == 2)
-        .map(|values| score(values[1], values[0]))
+        .map(|values| (expected_play(values[1], values[0]), values[0]))
+        .map(|(me, opponent)| score(me, opponent))
         .sum::<i32>() as usize
 }
 
+// Boooh!!
+fn expected_play<'a>(expected_result: &'a str, opponent_move: &'a str) -> &'a str {
+    if expected_result == LOSE {
+        if opponent_move == ROCK {
+            SCISSORS
+        } else if opponent_move == PAPER {
+            ROCK
+        } else {
+            PAPER
+        }
+    } else if expected_result == WIN {
+        if opponent_move == ROCK {
+            PAPER
+        } else if opponent_move == PAPER {
+            SCISSORS
+        } else {
+            ROCK
+        }
+    } else { // DRAWN
+        opponent_move
+    }
+}
+
 // So ugly! :D
-fn score(me: &str, opponent: &str) -> i32 {
-    if me == "X" && opponent == "A" {
+fn score(my_move: &str, opponent_move: &str) -> i32 {
+    if my_move == ROCK && opponent_move == ROCK {
         1 + 3
-    } else if me == "Y" && opponent == "B" {
+    } else if my_move == PAPER && opponent_move == PAPER {
         2 + 3
-    } else if me == "Z" && opponent == "C" {
+    } else if my_move == SCISSORS && opponent_move == SCISSORS {
         3 + 3
-    } else if me == "X" && opponent == "B" {
+    } else if my_move == ROCK && opponent_move == PAPER {
         1 + 0
-    } else if me == "X" && opponent == "C" {
+    } else if my_move == ROCK && opponent_move == SCISSORS {
         1 + 6
-    } else if me == "Y" && opponent == "A" {
+    } else if my_move == PAPER && opponent_move == ROCK {
         2 + 6
-    } else if me == "Y" && opponent == "C" {
+    } else if my_move == PAPER && opponent_move == SCISSORS {
         2 + 0
-    } else if me == "Z" && opponent == "A" {
+    } else if my_move == SCISSORS && opponent_move == ROCK {
         3 + 0
-    } else if me == "Z" && opponent == "B" {
+    } else if my_move == SCISSORS && opponent_move == PAPER {
         3 + 6
     } else { 0 }
 }
@@ -43,6 +74,6 @@ fn test_data() {
 A Y
 B X
 C Z
-".to_string()), 15);
+".to_string()), 12);
 }
 
