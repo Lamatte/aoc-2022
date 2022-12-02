@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+use std::cmp::Ordering::{Equal, Greater, Less};
 use std::fs;
 
 const ROCK: &'static str = "A";
@@ -45,27 +47,30 @@ fn my_expected_move<'a>(expected_result: &'a str, opponent_move: &'a str) -> &'a
     }
 }
 
-// So ugly! :D
 fn score(my_move: &str, opponent_move: &str) -> i32 {
-    if my_move == ROCK && opponent_move == ROCK {
-        1 + 3
-    } else if my_move == PAPER && opponent_move == PAPER {
-        2 + 3
-    } else if my_move == SCISSORS && opponent_move == SCISSORS {
-        3 + 3
-    } else if my_move == ROCK && opponent_move == PAPER {
-        1 + 0
-    } else if my_move == ROCK && opponent_move == SCISSORS {
-        1 + 6
-    } else if my_move == PAPER && opponent_move == ROCK {
-        2 + 6
-    } else if my_move == PAPER && opponent_move == SCISSORS {
-        2 + 0
-    } else if my_move == SCISSORS && opponent_move == ROCK {
-        3 + 0
-    } else if my_move == SCISSORS && opponent_move == PAPER {
-        3 + 6
-    } else { 0 }
+    move_score(my_move) + match_score(my_move, opponent_move)
+}
+
+fn move_score(my_move: &str) -> i32 {
+    if my_move == ROCK {
+        1
+    } else if my_move == PAPER {
+        2
+    } else {
+        3
+    }
+}
+
+fn match_score(my_move: &str, opponent_move: &str) -> i32 {
+    if my_move == opponent_move {
+        3
+    } else if (my_move == ROCK && opponent_move == PAPER)
+        || (my_move == PAPER && opponent_move == SCISSORS)
+        || (my_move == SCISSORS && opponent_move == ROCK){
+        0
+    } else {
+        6
+    }
 }
 
 #[test]
