@@ -17,13 +17,13 @@ fn execute(input: String) -> usize {
         .split("\n")
         .map(|s| s.split(" ").collect::<Vec<&str>>())
         .filter(|values| values.len() == 2)
-        .map(|values| (expected_play(values[1], values[0]), values[0]))
-        .map(|(me, opponent)| score(me, opponent))
+        .map(|values| (my_expected_move(values[1], values[0]), values[0]))
+        .map(|(my_move, opponent_move)| score(my_move, opponent_move))
         .sum::<i32>() as usize
 }
 
 // Boooh!!
-fn expected_play<'a>(expected_result: &'a str, opponent_move: &'a str) -> &'a str {
+fn my_expected_move<'a>(expected_result: &'a str, opponent_move: &'a str) -> &'a str {
     if expected_result == LOSE {
         if opponent_move == ROCK {
             SCISSORS
