@@ -1,4 +1,5 @@
 use std::fs;
+use itertools::Itertools;
 
 fn main() {
     let input = fs::read_to_string("resources/input.txt").expect("Could not read file");
@@ -8,15 +9,15 @@ fn main() {
 fn execute(input: String) -> usize {
     input.lines()
         .filter(|l| l.len() > 0)
-        .map(|l| (&l[0..l.len() / 2], &l[l.len() / 2..l.len()]))
-        .filter_map(|(s1, s2)| common_char(s1, s2))
+        .chunks(3).into_iter()
+        .filter_map(|mut c| common_char(c.next().unwrap(), c.next().unwrap(), c.next().unwrap()))
         .map(|c| value(c) as u32)
         .sum::<u32>() as usize
 }
 
-fn common_char(s1: &str, s2: &str) -> Option<char> {
+fn common_char(s1: &str, s2: &str, s3: &str) -> Option<char> {
     s1.chars()
-        .filter(|c| s2.contains(&c.to_string()))
+        .filter(|c| s2.contains(&c.to_string()) && s3.contains(&c.to_string()))
         .last()
 }
 
@@ -38,6 +39,6 @@ PmmdzqPrVvPwwTWBwg
 wMqvLMZHhHMvwLHjbvcjnnSBnvTQFn
 ttgJtRGJQctTZtZT
 CrZsJsPPZsGzwwsLwLmpwMDw
-".to_string()), 157);
+".to_string()), 70);
 }
 
