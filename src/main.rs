@@ -17,7 +17,7 @@ fn execute(input: String) -> usize {
 }
 
 fn overlap(s1: &Range<u8>, s2: &Range<u8>) -> bool {
-    (s1.start <= s2.start && s1.end >= s2.end) || (s2.start <= s1.start && s2.end >= s1.end)
+    (s1.start <= s2.start && s1.end >= s2.start) || (s2.start <= s1.start && s2.end >= s1.start)
 }
 
 fn parse_range(s: &str) -> Range<u8> {
@@ -34,6 +34,6 @@ fn test_data() {
 2-8,3-7
 6-6,4-6
 2-6,4-8
-".to_string()), 2);
+".to_string()), 4);
 }
 
