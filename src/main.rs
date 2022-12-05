@@ -17,8 +17,13 @@ fn execute(input: String) -> String {
     let board = parts[1].lines()
         .map(|l| parse_move(l))
         .fold(parse_board(parts[0]), |mut acc: Vec<Vec<char>>, (count, from, to)| {
+            let mut tmp = vec![];
             (1..count+1).for_each(|_| {
                 let x = acc[from as usize - 1].pop().unwrap();
+                tmp.push(x)
+            });
+            (1..count+1).for_each(|_| {
+                let x = tmp.pop().unwrap();
                 acc[to as usize - 1].push(x);
             });
             acc
@@ -80,6 +85,6 @@ move 1 from 2 to 1
 move 3 from 1 to 3
 move 2 from 2 to 1
 move 1 from 1 to 2
-".to_string()), "CMZ");
+".to_string()), "MCD");
 }
 
