@@ -16,27 +16,32 @@ fn execute(input: String) -> String {
 
     let board = parts[1].lines()
         .map(|l| parse_move(l))
-        .fold(parse_board(parts[0]), |mut acc: Vec<Vec<char>>, (count, from, to)| {
-            let mut tmp = vec![];
-            (1..count+1).for_each(|_| {
-                let x = acc[from as usize - 1].pop().unwrap();
-                tmp.push(x)
-            });
-            (1..count+1).for_each(|_| {
-                let x = tmp.pop().unwrap();
-                acc[to as usize - 1].push(x);
-            });
-            acc
+        .fold(parse_board(parts[0]), |board: Vec<Vec<char>>, (count, from, to)| {
+            handle_move(board, count, from, to)
         });
     board.iter()
         .filter_map(|s| s.last())
         .collect()
+}
 
+fn handle_move(mut board: Vec<Vec<char>>, count: u8, from: u8, to: u8) -> Vec<Vec<char>> {
+    let mut tmp = vec![];
+    (1..count + 1).for_each(|_| {
+        let x = board[from as usize - 1].pop().unwrap();
+        tmp.push(x)
+    });
+    (1..count + 1).for_each(|_| {
+        let x = tmp.pop().unwrap();
+        board[to as usize - 1].push(x);
+    });
+    board
 }
 
 fn parse_board(input: &str) -> Vec<Vec<char>> {
-    let board = input.lines()
-        .map(|l| (0..9).into_iter().map(|i| get_element_at(l, i)).collect::<Vec<Option<char>>>())
+    input.lines()
+        .map(|l| (0..9).into_iter()
+            .map(|i| get_element_at(l, i))
+            .collect::<Vec<Option<char>>>())
         .rev()
         .fold(empty_game(), |mut acc: Vec<Vec<char>>, chars| {
             (0..9).into_iter()
@@ -46,8 +51,7 @@ fn parse_board(input: &str) -> Vec<Vec<char>> {
                     }
                 });
             acc
-        });
-    board
+        })
 }
 
 fn empty_game() -> Vec<Vec<char>> {
@@ -62,7 +66,7 @@ fn parse_move(l: &str) -> (u8, u8, u8) {
 }
 
 fn get_element_at(l: &str, index: usize) -> Option<char> {
-    if l.len() >= 1 + index*4 {
+    if l.len() >= 1 + index * 4 {
         let res = l.as_bytes()[1 + index * 4] as char;
         if res == ' ' {
             None
