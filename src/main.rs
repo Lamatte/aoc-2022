@@ -1,23 +1,20 @@
-use std::collections::VecDeque;
 use std::fs;
+use std::time::Instant;
 use itertools::Itertools;
 
 fn main() {
     let input = fs::read_to_string("resources/input.txt").expect("Could not read file");
+    let start = Instant::now();
     eprintln!("{}", execute(input));
+    eprintln!("Elapsed time: {:?}", start.elapsed());
 }
 
+const LEN: usize = 14;
+
 fn execute(input: String) -> usize {
-    let mut count = 0;
-    let mut last_chars: VecDeque<u8> = VecDeque::new();
-    for c in input.as_bytes() {
-        count = count + 1;
-        if last_chars.len() >= 14 {
-            last_chars.pop_front();
-        }
-        last_chars.push_back(*c);
-        if last_chars.iter().unique().count() == 14 {
-            return count;
+    for i in LEN..input.len() {
+        if input[i - LEN..i].as_bytes().iter().unique().count() == LEN {
+            return i;
         }
     }
     0
