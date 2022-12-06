@@ -12,11 +12,11 @@ fn execute(input: String) -> usize {
     let mut last_chars: VecDeque<u8> = VecDeque::new();
     for c in input.as_bytes() {
         count = count + 1;
-        if last_chars.len() >= 4 {
+        if last_chars.len() >= 14 {
             last_chars.pop_front();
         }
         last_chars.push_back(*c);
-        if last_chars.iter().unique().count() == 4 {
+        if last_chars.iter().unique().count() == 14 {
             return count;
         }
     }
@@ -26,6 +26,6 @@ fn execute(input: String) -> usize {
 #[test]
 fn test_data() {
     assert_eq!(execute(r"mjqjpqmgbljsphdztnvjfqwrcgsmlb
-".to_string()), 7);
+".to_string()), 19);
 }
 
