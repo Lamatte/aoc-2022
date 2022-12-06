@@ -1,8 +1,12 @@
 use std::fs;
+use std::time::Instant;
 
 fn main() {
     let input = fs::read_to_string("resources/input.txt").expect("Could not read file");
-    eprintln!("{}", execute(input));
+    let start = Instant::now();
+    let result = execute(input);
+    eprintln!("Elapsed time: {:?}", start.elapsed());
+    println!("{}", result);
 }
 
 fn execute(input: String) -> usize {
