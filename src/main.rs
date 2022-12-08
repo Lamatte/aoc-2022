@@ -1,5 +1,6 @@
 use std::fs;
 use std::time::Instant;
+use itertools::Itertools;
 
 fn main() {
     let input = fs::read_to_string("resources/input.txt").expect("Could not read file");
@@ -10,66 +11,64 @@ fn main() {
 }
 
 fn execute(input: String) -> usize {
+    let grid = parse_input(input);
+    (0..grid.len())
+        .flat_map(|line| (0..grid.len()).map(move |column| (line, column)))
+        .map(|(line, column)| scenic_score(&grid, line, column))
+        .sorted()
+        .last().unwrap()
+}
+
+fn scenic_score(grid: &Vec<Vec<u8>>, line: usize, column: usize) -> usize {
+    visible_left_count(grid, line, column) * visible_right_count(grid, line, column) * visible_top_count(grid, line, column) * visible_bottom_count(grid, line, column)
+}
+
+fn visible_left_count(grid: &Vec<Vec<u8>>, line: usize, column: usize) -> usize {
+    count(
+        (0..column).rev().map(|column| grid[line][column]).collect(),
+        grid[line][column],
+    )
+}
+
+fn visible_top_count(grid: &Vec<Vec<u8>>, line: usize, column: usize) -> usize {
+    count(
+        (0..line).rev().map(|line| grid[line][column]).collect(),
+        grid[line][column],
+    )
+}
+
+fn visible_right_count(grid: &Vec<Vec<u8>>, line: usize, column: usize) -> usize {
+    count(
+        (column + 1..grid.len()).map(|column| grid[line][column]).collect(),
+        grid[line][column],
+    )
+}
+
+fn visible_bottom_count(grid: &Vec<Vec<u8>>, line: usize, column: usize) -> usize {
+    count(
+        (line + 1..grid.len()).map(|line| grid[line][column]).collect(),
+        grid[line][column],
+    )
+}
+
+fn count(values: Vec<u8>, current_value: u8) -> usize {
+    let mut res = 0;
+    for value in values {
+        res = res + 1;
+        if value >= current_value {
+            break;
+        }
+    }
+    res
+}
+
+fn parse_input(input: String) -> Vec<Vec<u8>> {
     let grid = input.lines()
         .map(|l| l.chars()
             .map(|c| c as u8 - 48)
             .collect::<Vec<u8>>())
         .collect::<Vec<Vec<u8>>>();
-    let mut res = 0;
-    for line in 1..grid.len()-1 {
-        for column in 1..grid.len()-1 {
-            if is_visible(&grid, line, column) {
-                eprintln!("{}/{} is visible", line, column);
-                res = res + 1;
-            }
-        }
-    }
-    res + edges(grid)
-}
-
-fn edges(grid: Vec<Vec<u8>>) -> usize {
-    grid.len()*4-4
-}
-
-fn is_visible(grid: &Vec<Vec<u8>>, line: usize, column: usize) -> bool {
-    is_visible_left(grid, line, column) || is_visible_right(grid, line, column) || is_visible_top(grid, line, column) || is_visible_bottom(grid, line, column)
-}
-
-fn is_visible_left(grid: &Vec<Vec<u8>>, line: usize, column: usize) -> bool {
-    for other_column in 0..column {
-        if grid[line][other_column] >= grid[line][column] {
-            return false;
-        }
-    };
-    true
-}
-
-fn is_visible_right(grid: &Vec<Vec<u8>>, line: usize, column: usize) -> bool {
-    for other_column in column+1..grid.len() {
-        if grid[line][other_column] >= grid[line][column] {
-            return false;
-        }
-    };
-    true
-}
-
-fn is_visible_top(grid: &Vec<Vec<u8>>, line: usize, column: usize) -> bool {
-    for other_line in 0..line {
-        if grid[other_line][column] >= grid[line][column] {
-            return false;
-        }
-    };
-    true
-}
-
-
-fn is_visible_bottom(grid: &Vec<Vec<u8>>, line: usize, column: usize) -> bool {
-    for other_line in line+1..grid.len() {
-        if grid[other_line][column] >= grid[line][column] {
-            return false;
-        }
-    };
-    true
+    grid
 }
 
 #[test]
@@ -79,6 +78,6 @@ fn test_data() {
 65332
 33549
 35390
-".to_string()), 21);
+".to_string()), 8);
 }
 
