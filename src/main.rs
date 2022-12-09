@@ -28,17 +28,22 @@ fn main() {
 }
 
 fn execute(input: String) -> usize {
-    input.lines()
-        .filter_map(|line| line.split_once(" "))
-        .map(|(m, count)| (m.parse::<Move>().unwrap(), count.parse::<u32>().unwrap()))
-        .flat_map(|(m, count)| (0..count).map(move |_| m))
-        .scan(Rope::new(), |current_rope, m| {
-            *current_rope = current_rope.execute(m);
+    instructions(input).iter()
+        .scan(Rope::new(), |current_rope, instruction| {
+            *current_rope = current_rope.execute(*instruction);
             Some(current_rope.clone())
         })
         .map(|rope| rope.segments[9])
         .unique()
         .count()
+}
+
+fn instructions(input: String) -> Vec<Move> {
+    input.lines()
+        .filter_map(|line| line.split_once(" "))
+        .map(|(m, count)| (m.parse::<Move>().unwrap(), count.parse::<u32>().unwrap()))
+        .flat_map(|(m, count)| (0..count).map(move |_| m))
+        .collect::<Vec<Move>>()
 }
 
 impl Rope {
