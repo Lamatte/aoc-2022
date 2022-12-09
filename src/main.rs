@@ -2,10 +2,9 @@ use std::fs;
 use std::str::FromStr;
 use std::time::Instant;
 use itertools::Itertools;
-use Move::Down;
-use crate::Move::{Left, Right, Up};
+use Move::{Left, Right, Up, Down};
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 enum Move {
     Up,
     Left,
@@ -17,43 +16,8 @@ type Coordinates = (i32, i32);
 
 #[derive(Debug)]
 struct Rope {
-    head: Coordinates,
-    tail: Coordinates,
+    segments: Vec<Coordinates>,
     visited: Vec<Coordinates>,
-}
-
-impl Rope {
-    pub(crate) fn execute(&self, m: Move) -> Rope {
-        let head = self.move_head(&m);
-        let tail = self.move_tail(head);
-        let mut visited = self.visited.clone();
-        visited.push(tail);
-        let rope = Rope { head, tail, visited };
-        rope
-    }
-
-    fn move_tail(&self, head: Coordinates) -> Coordinates {
-        if (self.tail.0 - head.0).abs() <= 1 && (self.tail.1 - head.1).abs() <= 1 {
-            self.tail
-        } else {
-            if (self.tail.0 - head.0).abs() == 2 {
-                ((self.tail.0 + head.0) / 2, head.1)
-            } else if (self.tail.1 - head.1).abs() == 2 {
-                (head.0, (self.tail.1 + head.1) / 2)
-            } else {
-                ((self.tail.0 + head.0) / 2, (self.tail.1 + head.1) / 2)
-            }
-        }
-    }
-
-    fn move_head(&self, m: &Move) -> Coordinates {
-        match m {
-            Up => (self.head.0, self.head.1 + 1),
-            Left => (self.head.0 - 1, self.head.1),
-            Right => (self.head.0 + 1, self.head.1),
-            Down => (self.head.0, self.head.1 - 1),
-        }
-    }
 }
 
 fn main() {
@@ -68,9 +32,43 @@ fn execute(input: String) -> usize {
     let rope = input.lines()
         .filter(|line| line.len() > 0)
         .map(|line| line.split_once(" ").unwrap())
-        .flat_map(|(m, count)| (0..count.parse::<u32>().unwrap()).map(move |_| m.parse::<Move>().unwrap()))
+        .map(|(m, count)| (m.parse::<Move>().unwrap(), count.parse::<u32>().unwrap()))
+        .flat_map(|(m, count)| (0..count).map(move |_| m))
         .fold(Rope::new(), |rope, m| rope.execute(m));
     rope.visited.iter().unique().count()
+}
+
+impl Rope {
+    pub(crate) fn execute(&self, m: Move) -> Rope {
+        let mut new_segments = vec![self.new_head(&m)];
+        for i in 1..self.segments.len() {
+            new_segments.push(Self::move_segment(self.segments[i], new_segments[i - 1]));
+        };
+        let mut visited = self.visited.clone();
+        visited.push(new_segments[9]);
+        Rope { segments: new_segments, visited }
+    }
+
+    fn move_segment(element: Coordinates, previous_element: Coordinates) -> Coordinates {
+        if (element.0 - previous_element.0).abs() <= 1 && (element.1 - previous_element.1).abs() <= 1 {
+            element
+        } else if (element.0 - previous_element.0).abs() == 2 && (element.1 - previous_element.1).abs() != 2 {
+            ((element.0 + previous_element.0) / 2, previous_element.1)
+        } else if (element.0 - previous_element.0).abs() != 2 && (element.1 - previous_element.1).abs() == 2 {
+            (previous_element.0, (element.1 + previous_element.1) / 2)
+        } else {
+            ((element.0 + previous_element.0) / 2, (element.1 + previous_element.1) / 2)
+        }
+    }
+
+    fn new_head(&self, m: &Move) -> Coordinates {
+        match m {
+            Up => (self.segments[0].0, self.segments[0].1 + 1),
+            Left => (self.segments[0].0 - 1, self.segments[0].1),
+            Right => (self.segments[0].0 + 1, self.segments[0].1),
+            Down => (self.segments[0].0, self.segments[0].1 - 1),
+        }
+    }
 }
 
 impl FromStr for Move {
@@ -78,9 +76,9 @@ impl FromStr for Move {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
-            "U" => Move::Up,
-            "L" => Move::Left,
-            "R" => Move::Right,
+            "U" => Up,
+            "L" => Left,
+            "R" => Right,
             "D" => Down,
             _ => unimplemented!()
         })
@@ -89,63 +87,65 @@ impl FromStr for Move {
 
 impl Rope {
     fn new() -> Rope {
-        Rope { head: (0, 0), tail: (0, 0), visited: vec![] }
+        Rope { segments: vec![(0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0)], visited: vec![] }
     }
 }
 
 #[test]
 fn move_right() {
-    let rope = Rope {
-        head: (2, 0),
-        tail: (1, 0),
-        visited: vec![],
-    }.execute(Right);
-    assert_eq!(rope.head, (3, 0));
-    assert_eq!(rope.tail, (2, 0));
+    let rope = Rope::new()
+        .execute(Right)
+        .execute(Right);
+    assert_eq!(rope.segments, vec![(2, 0), (1, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0)]);
 }
 
 #[test]
 fn move_left() {
-    let rope = Rope {
-        head: (2, 0),
-        tail: (1, 0),
-        visited: vec![],
-    }.execute(Left);
-    assert_eq!(rope.head, (1, 0));
-    assert_eq!(rope.tail, (1, 0));
+    let rope = Rope::new()
+        .execute(Left)
+        .execute(Left);
+    assert_eq!(rope.segments, vec![(-2, 0), (-1, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0)]);
 }
 
 #[test]
 fn tail_dont_move() {
     let rope = Rope {
-        head: (0, 0),
-        tail: (1, 1),
+        segments: vec![(1, 1), (2, 2), (2, 2), (2, 2), (2, 2), (2, 2), (2, 2), (2, 2), (2, 2), (2, 2)],
         visited: vec![],
-    }.execute(Right).execute(Right);
-    assert_eq!(rope.head, (2, 0));
-    assert_eq!(rope.tail, (1, 1));
+    }
+        .execute(Right)
+        .execute(Right);
+    assert_eq!(rope.segments, vec![(3, 1), (2, 2), (2, 2), (2, 2), (2, 2), (2, 2), (2, 2), (2, 2), (2, 2), (2, 2)],
+    );
 }
 
 #[test]
 fn move_up() {
-    let rope = Rope {
-        head: (2, 0),
-        tail: (1, 0),
-        visited: vec![],
-    }.execute(Up);
-    assert_eq!(rope.head, (2, 1));
-    assert_eq!(rope.tail, (1, 0));
+    let rope = Rope::new()
+        .execute(Up)
+        .execute(Up)
+        .execute(Up);
+    assert_eq!(rope.segments, vec![(0, 3), (0, 2), (0, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0)]);
 }
 
 #[test]
 fn move_up_diagonal() {
     let rope = Rope {
-        head: (2, 1),
-        tail: (1, 0),
+        segments: vec![(1, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0)],
         visited: vec![],
     }.execute(Up);
-    assert_eq!(rope.head, (2, 2));
-    assert_eq!(rope.tail, (2, 1));
+    assert_eq!(rope.segments, vec![(1, 2), (1, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0)]);
+    let rope = rope.execute(Up);
+    assert_eq!(rope.segments, vec![(1, 3), (1, 2), (1, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0)]);
+}
+
+#[test]
+fn an_inner_segment_moves_in_diagonal() {
+    let rope = Rope {
+        segments: vec![(4, 3), (4, 2), (3, 1), (2, 1), (1, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0)],
+        visited: vec![],
+    }.execute(Up);
+    assert_eq!(rope.segments, vec![(4, 4), (4, 3), (4, 2), (3, 2), (2, 2), (1, 1), (0, 0), (0, 0), (0, 0), (0, 0)]);
 }
 
 #[test]
@@ -158,6 +158,6 @@ R 4
 D 1
 L 5
 R 2
-".to_string()), 13);
+".to_string()), 1);
 }
 
