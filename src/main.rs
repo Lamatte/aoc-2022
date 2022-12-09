@@ -14,7 +14,7 @@ enum Move {
 
 type Coordinates = (i32, i32);
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 struct Rope {
     segments: [Coordinates; 10],
 }
@@ -47,20 +47,22 @@ impl Rope {
     }
 
     fn execute(&self, m: Move) -> Rope {
-        let mut new_segments = [(0, 0); 10];
-        new_segments[0] = self.new_head(&m);
+        let mut rope = Rope::new();
+        rope.segments[0] = self.new_head(&m);
         for i in 1..self.segments.len() {
-            new_segments[i] = Self::move_segment(self.segments[i], new_segments[i - 1]);
+            rope.segments[i] = Self::move_segment(self.segments[i], rope.segments[i - 1]);
         };
-        Rope { segments: new_segments }
+        rope
     }
 
     fn move_segment(element: Coordinates, previous_element: Coordinates) -> Coordinates {
-        if (element.0 - previous_element.0).abs() <= 1 && (element.1 - previous_element.1).abs() <= 1 {
+        let dx = (element.0 - previous_element.0).abs();
+        let dy = (element.1 - previous_element.1).abs();
+        if dx <= 1 && dy <= 1 {
             element
-        } else if (element.0 - previous_element.0).abs() == 2 && (element.1 - previous_element.1).abs() != 2 {
+        } else if dx == 2 && dy != 2 {
             ((element.0 + previous_element.0) / 2, previous_element.1)
-        } else if (element.0 - previous_element.0).abs() != 2 && (element.1 - previous_element.1).abs() == 2 {
+        } else if dx != 2 && dy == 2 {
             (previous_element.0, (element.1 + previous_element.1) / 2)
         } else {
             ((element.0 + previous_element.0) / 2, (element.1 + previous_element.1) / 2)
@@ -74,12 +76,6 @@ impl Rope {
             Right => (self.segments[0].0 + 1, self.segments[0].1),
             Down => (self.segments[0].0, self.segments[0].1 - 1),
         }
-    }
-}
-
-impl Clone for Rope {
-    fn clone(&self) -> Self {
-        Rope { segments: self.segments }
     }
 }
 
