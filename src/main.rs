@@ -16,7 +16,7 @@ type Coordinates = (i32, i32);
 
 #[derive(Debug)]
 struct Rope {
-    segments: Vec<Coordinates>,
+    segments: [Coordinates; 10],
 }
 
 fn main() {
@@ -43,13 +43,14 @@ fn execute(input: String) -> usize {
 
 impl Rope {
     fn new() -> Rope {
-        Rope { segments: vec![(0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0)] }
+        Rope { segments: [(0, 0); 10] }
     }
 
     fn execute(&self, m: Move) -> Rope {
-        let mut new_segments = vec![self.new_head(&m)];
+        let mut new_segments = [(0, 0); 10];
+        new_segments[0] = self.new_head(&m);
         for i in 1..self.segments.len() {
-            new_segments.push(Self::move_segment(self.segments[i], new_segments[i - 1]));
+            new_segments[i] = Self::move_segment(self.segments[i], new_segments[i - 1]);
         };
         Rope { segments: new_segments }
     }
@@ -78,7 +79,7 @@ impl Rope {
 
 impl Clone for Rope {
     fn clone(&self) -> Self {
-        Rope { segments: (*self.segments).to_vec() }
+        Rope { segments: self.segments }
     }
 }
 
@@ -101,7 +102,7 @@ fn move_right() {
     let rope = Rope::new()
         .execute(Right)
         .execute(Right);
-    assert_eq!(rope.segments, vec![(2, 0), (1, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0)]);
+    assert_eq!(rope.segments, [(2, 0), (1, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0)]);
 }
 
 #[test]
@@ -109,17 +110,17 @@ fn move_left() {
     let rope = Rope::new()
         .execute(Left)
         .execute(Left);
-    assert_eq!(rope.segments, vec![(-2, 0), (-1, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0)]);
+    assert_eq!(rope.segments, [(-2, 0), (-1, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0)]);
 }
 
 #[test]
 fn tail_dont_move() {
     let rope = Rope {
-        segments: vec![(1, 1), (2, 2), (2, 2), (2, 2), (2, 2), (2, 2), (2, 2), (2, 2), (2, 2), (2, 2)],
+        segments: [(1, 1), (2, 2), (2, 2), (2, 2), (2, 2), (2, 2), (2, 2), (2, 2), (2, 2), (2, 2)],
     }
         .execute(Right)
         .execute(Right);
-    assert_eq!(rope.segments, vec![(3, 1), (2, 2), (2, 2), (2, 2), (2, 2), (2, 2), (2, 2), (2, 2), (2, 2), (2, 2)],
+    assert_eq!(rope.segments, [(3, 1), (2, 2), (2, 2), (2, 2), (2, 2), (2, 2), (2, 2), (2, 2), (2, 2), (2, 2)],
     );
 }
 
@@ -129,25 +130,25 @@ fn move_up() {
         .execute(Up)
         .execute(Up)
         .execute(Up);
-    assert_eq!(rope.segments, vec![(0, 3), (0, 2), (0, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0)]);
+    assert_eq!(rope.segments, [(0, 3), (0, 2), (0, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0)]);
 }
 
 #[test]
 fn move_up_diagonal() {
     let rope = Rope {
-        segments: vec![(1, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0)],
+        segments: [(1, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0)],
     }.execute(Up);
-    assert_eq!(rope.segments, vec![(1, 2), (1, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0)]);
+    assert_eq!(rope.segments, [(1, 2), (1, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0)]);
     let rope = rope.execute(Up);
-    assert_eq!(rope.segments, vec![(1, 3), (1, 2), (1, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0)]);
+    assert_eq!(rope.segments, [(1, 3), (1, 2), (1, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0)]);
 }
 
 #[test]
 fn an_inner_segment_moves_in_diagonal() {
     let rope = Rope {
-        segments: vec![(4, 3), (4, 2), (3, 1), (2, 1), (1, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0)],
+        segments: [(4, 3), (4, 2), (3, 1), (2, 1), (1, 1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0)],
     }.execute(Up);
-    assert_eq!(rope.segments, vec![(4, 4), (4, 3), (4, 2), (3, 2), (2, 2), (1, 1), (0, 0), (0, 0), (0, 0), (0, 0)]);
+    assert_eq!(rope.segments, [(4, 4), (4, 3), (4, 2), (3, 2), (2, 2), (1, 1), (0, 0), (0, 0), (0, 0), (0, 0)]);
 }
 
 #[test]
