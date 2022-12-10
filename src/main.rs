@@ -1,5 +1,30 @@
 use std::fs;
 use std::time::Instant;
+use itertools::Itertools;
+
+#[derive(Debug, Copy, Clone)]
+struct Computer {
+    cycle: i32,
+    register: i32,
+}
+
+impl Computer {
+    fn new() -> Computer {
+        Computer { cycle: 0, register: 1 }
+    }
+
+    fn pixel(&self) -> char {
+        if self.current_cycle_is_on_cursor() {
+            '#'
+        } else {
+            '.'
+        }
+    }
+
+    fn current_cycle_is_on_cursor(&self) -> bool {
+        (self.cycle % 40) >= self.register - 1 && (self.cycle % 40) <= self.register + 1
+    }
+}
 
 fn main() {
     let input = fs::read_to_string("resources/input.txt").expect("Could not read file");
@@ -9,25 +34,31 @@ fn main() {
     println!("{}", result);
 }
 
-fn execute(input: String) -> usize {
-    input.lines().flat_map(|line| {
-        if line == "noop" {
-            vec![0]
-        } else {
-            let x = line.split_once(' ').unwrap();
-            vec![0, x.1.parse::<i32>().unwrap()]
-        }
-    })
-        .scan((1, 1), |(cycle, register), val| {
-            *register += val;
-            *cycle += 1;
-            Some((*cycle, *register))
+fn execute(input: String) -> String {
+    get_instructions(input).into_iter()
+        .scan(Computer::new(), |computer, instruction_value| {
+            let current_computer = computer.clone();
+            computer.register += instruction_value;
+            computer.cycle += 1;
+            Some(current_computer)
         })
-        .inspect(|(cycle, register)| eprintln!("{} - {}", cycle, register))
-        .filter(|(cycle, register)| *cycle == 20 || (20 + *cycle) % 40 == 0)
-        //.inspect(|(cycle, register)| eprintln!("{} - {}", cycle, register))
-        .map(|(cycle, register)| cycle*register)
-        .sum::<i32>() as usize
+        .map(|computer| computer.pixel())
+        .chunks(40).into_iter()
+        .map(|line_chunk| line_chunk.into_iter().collect::<String>())
+        .join("\n")
+}
+
+fn get_instructions(input: String) -> Vec<i32> {
+    input.lines()
+        .flat_map(|line| {
+            if line == "noop" {
+                vec![0]
+            } else {
+                let split = line.split_once(' ').unwrap();
+                vec![0, split.1.parse::<i32>().unwrap()]
+            }
+        })
+        .collect()
 }
 
 #[test]
@@ -178,6 +209,11 @@ addx -11
 noop
 noop
 noop
-".to_string()), 13140);
+".to_string()), "##..##..##..##..##..##..##..##..##..##..
+###...###...###...###...###...###...###.
+####....####....####....####....####....
+#####.....#####.....#####.....#####.....
+######......######......######......####
+#######.......#######.......#######.....");
 }
 
