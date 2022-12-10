@@ -13,16 +13,17 @@ impl Computer {
         Computer { cycle: 0, register: 1 }
     }
 
+    fn execute(&mut self, instruction_value: i32) {
+        self.register += instruction_value;
+        self.cycle += 1;
+    }
+
     fn pixel(&self) -> char {
-        if self.current_cycle_is_on_cursor() {
-            '#'
-        } else {
-            '.'
-        }
+        if self.current_cycle_is_on_cursor() { '#' } else { '.' }
     }
 
     fn current_cycle_is_on_cursor(&self) -> bool {
-        (self.cycle % 40) >= self.register - 1 && (self.cycle % 40) <= self.register + 1
+        self.cycle % 40 >= self.register - 1 && self.cycle % 40 <= self.register + 1
     }
 }
 
@@ -35,11 +36,10 @@ fn main() {
 }
 
 fn execute(input: String) -> String {
-    get_instructions(input).into_iter()
+    instructions(input).into_iter()
         .scan(Computer::new(), |computer, instruction_value| {
             let current_computer = computer.clone();
-            computer.register += instruction_value;
-            computer.cycle += 1;
+            computer.execute(instruction_value);
             Some(current_computer)
         })
         .map(|computer| computer.pixel())
@@ -48,17 +48,19 @@ fn execute(input: String) -> String {
         .join("\n")
 }
 
-fn get_instructions(input: String) -> Vec<i32> {
+fn instructions(input: String) -> Vec<i32> {
     input.lines()
-        .flat_map(|line| {
-            if line == "noop" {
-                vec![0]
-            } else {
-                let split = line.split_once(' ').unwrap();
-                vec![0, split.1.parse::<i32>().unwrap()]
-            }
-        })
+        .flat_map(|line| parse_instruction(line))
         .collect()
+}
+
+fn parse_instruction(line: &str) -> Vec<i32> {
+    if line == "noop" {
+        vec![0]
+    } else {
+        let split = line.split_once(' ').unwrap();
+        vec![0, split.1.parse::<i32>().unwrap()]
+    }
 }
 
 #[test]
