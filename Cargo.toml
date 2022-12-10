@@ -9,4 +9,8 @@ edition = "2018"
 [dependencies]
 regex = "1"
 lazy_static = "1"
-itertools = "0.9"
+itertools = "0.10"
+
+[profile.release]
+lto = true
+codegen-units = 1
