@@ -27,23 +27,25 @@ fn execute(input: &String) -> usize {
     let mut monkeys = input.split("\n\n")
         .filter_map(|s| s.parse::<Monkey>().ok())
         .collect::<Vec<Monkey>>();
+    let modulus_product: u64 = monkeys.iter()
+        .map(|m| m.modulus)
+        .product();
     let mut inspections = [0 as u64; 10];
-    let m: u64 = monkeys.iter().map(|m| m.modulus).product();
-    for round in 0..10000 {
+    for _ in 0..10000 {
         for i in 0..monkeys.len() {
-            for j in 0..monkeys[i].items.len() {
+            for _ in 0..monkeys[i].items.len() {
                 let mut val = monkeys[i].items.pop_front().unwrap();
-                //eprintln!("Monkey {} inspects {}", i, val);
                 inspections[i] += 1;
-                val = ((monkeys[i].operation)(val % m));
-                //eprintln!("{}", val);
+                val = (monkeys[i].operation)(val % modulus_product);
                 let other_monkey = (monkeys[i].target)(val) as usize;
-                //eprintln!("Sending to {}", other_monkey);
                 monkeys[other_monkey].items.push_back(val);
             }
         }
     }
-    inspections.iter().sorted().rev().take(2).fold(1, |acc, i| acc * (*i)) as usize
+    inspections.iter()
+        .sorted().rev()
+        .take(2)
+        .product::<u64>() as usize
 }
 
 impl FromStr for Monkey {
