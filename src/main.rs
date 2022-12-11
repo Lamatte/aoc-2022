@@ -5,9 +5,10 @@ use std::time::Instant;
 use itertools::Itertools;
 
 struct Monkey {
-    items: VecDeque<i32>,
-    operation: Box<dyn Fn(i32) -> i32>,
-    target: Box<dyn Fn(i32) -> i32>,
+    items: VecDeque<u64>,
+    operation: Box<dyn Fn(u64) -> u64>,
+    modulus: u64,
+    target: Box<dyn Fn(u64) -> u64>,
 }
 
 fn main() {
@@ -26,14 +27,15 @@ fn execute(input: &String) -> usize {
     let mut monkeys = input.split("\n\n")
         .filter_map(|s| s.parse::<Monkey>().ok())
         .collect::<Vec<Monkey>>();
-    let mut inspections = [0; 10];
-    for round in 0..20 {
+    let mut inspections = [0 as u64; 10];
+    let m: u64 = monkeys.iter().map(|m| m.modulus).product();
+    for round in 0..10000 {
         for i in 0..monkeys.len() {
             for j in 0..monkeys[i].items.len() {
                 let mut val = monkeys[i].items.pop_front().unwrap();
                 //eprintln!("Monkey {} inspects {}", i, val);
                 inspections[i] += 1;
-                let val = (monkeys[i].operation)(val) / 3;
+                val = ((monkeys[i].operation)(val % m));
                 //eprintln!("{}", val);
                 let other_monkey = (monkeys[i].target)(val) as usize;
                 //eprintln!("Sending to {}", other_monkey);
@@ -41,7 +43,7 @@ fn execute(input: &String) -> usize {
             }
         }
     }
-    inspections.iter().sorted().rev().take(2).fold(1, |acc, i| acc*(*i)) as usize
+    inspections.iter().sorted().rev().take(2).fold(1, |acc, i| acc * (*i)) as usize
 }
 
 impl FromStr for Monkey {
@@ -49,35 +51,35 @@ impl FromStr for Monkey {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let lines = s.lines().map(&str::to_string).collect::<Vec<String>>();
-        let items = lines[1].split_once(": ").unwrap().1.split(", ").filter_map(|s| s.parse::<i32>().ok()).collect::<VecDeque<i32>>();
+        let items = lines[1].split_once(": ").unwrap().1.split(", ").filter_map(|s| s.parse::<u64>().ok()).collect::<VecDeque<u64>>();
         let vec = &lines[2].split_once(" = ").unwrap().1.split(" ").map(&str::to_string).collect::<Vec<String>>();
-        let operation: Box<dyn Fn(i32) -> i32> = if vec[2] == "old" {
+        let operation: Box<dyn Fn(u64) -> u64> = if vec[2] == "old" {
             match vec[1].as_str() {
-                "*" => Box::new(move |val: i32| {
+                "*" => Box::new(move |val: u64| {
                     val * val
                 }),
-                "+" => Box::new(move |val: i32| {
+                "+" => Box::new(move |val: u64| {
                     val + val
                 }),
                 &_ => unimplemented!()
             }
         } else {
-            let i = vec[2].parse::<i32>().unwrap();
+            let i = vec[2].parse::<u64>().unwrap();
             match vec[1].as_str() {
-                "*" => Box::new(move |val: i32| {
+                "*" => Box::new(move |val: u64| {
                     val * i
                 }),
-                "+" => Box::new(move |val: i32| {
+                "+" => Box::new(move |val: u64| {
                     val + i
                 }),
                 &_ => unimplemented!()
             }
         };
-        let div = lines[3].split_once("by ").unwrap().1.parse::<i32>().unwrap();
-        let monkey_when_true = lines[4].split_once("monkey ").unwrap().1.parse::<i32>().unwrap();
-        let monkey_when_false = lines[5].split_once("monkey ").unwrap().1.parse::<i32>().unwrap();
-        let target: Box<dyn Fn(i32) -> i32> = Box::new(move |val| {
-            if val % div == 0 {
+        let modulus = lines[3].split_once("by ").unwrap().1.parse::<u64>().unwrap();
+        let monkey_when_true = lines[4].split_once("monkey ").unwrap().1.parse::<u64>().unwrap();
+        let monkey_when_false = lines[5].split_once("monkey ").unwrap().1.parse::<u64>().unwrap();
+        let target: Box<dyn Fn(u64) -> u64> = Box::new(move |val| {
+            if val % modulus == 0 {
                 monkey_when_true
             } else {
                 monkey_when_false
@@ -88,37 +90,10 @@ impl FromStr for Monkey {
         Ok(Monkey {
             items,
             operation,
-            target
+            target,
+            modulus,
         })
     }
-}
-
-#[test]
-fn parse_monkey() {
-    let monkey = "Monkey 0:
-Starting items: 79, 98
-Operation: new = old * 19
-Test: divisible by 23
-If true: throw to monkey 2
-If false: throw to monkey 3".parse::<Monkey>().unwrap();
-    assert_eq!((monkey.operation)(1), 19);
-    assert_eq!((monkey.operation)(3), 57);
-    assert_eq!((monkey.target)(23), 2);
-    assert_eq!((monkey.target)(2), 3);
-}
-
-#[test]
-fn parse_monkey_2() {
-    let monkey = "Monkey 0:
-Starting items: 79, 98
-Operation: new = old * old
-Test: divisible by 13
-If true: throw to monkey 11
-If false: throw to monkey 33".parse::<Monkey>().unwrap();
-    assert_eq!((monkey.operation)(1), 1);
-    assert_eq!((monkey.operation)(3), 9);
-    assert_eq!((monkey.target)(2080), 11);
-    assert_eq!((monkey.target)(1), 33);
 }
 
 #[test]
@@ -150,6 +125,6 @@ Monkey 3:
   Test: divisible by 17
     If true: throw to monkey 0
     If false: throw to monkey 1
-".to_string()), 10605);
+".to_string()), 2713310158);
 }
 
