@@ -5,7 +5,6 @@ use itertools::{Itertools};
 type Position = (usize, usize); // (line, column)
 
 struct Hill {
-    start: Position,
     target: Position,
     cells: Vec<Vec<char>>,
     distances: Vec<Vec<Option<usize>>>,
@@ -26,7 +25,10 @@ fn main() {
 fn execute(input: &String) -> usize {
     let mut hill = Hill::parse(input);
     hill.explore(vec![hill.target], 0);
-    hill.distances[hill.start.0][hill.start.1].unwrap()
+    Hill::all_positions(&hill.cells).iter()
+        .filter(|position| hill.cells[position.0][position.1] == 'a')
+        .filter_map(|position| hill.distances[position.0][position.1])
+        .min().unwrap()
 }
 
 impl Hill {
@@ -40,7 +42,6 @@ impl Hill {
         cells[target.0][target.1] = 'z';
         cells[start.0][start.1] = 'a';
         Hill {
-            start,
             target,
             cells,
             distances,
@@ -85,8 +86,8 @@ impl Hill {
             neighbours.push((position.0, position.1 + 1));
         }
         neighbours.into_iter()
-            .filter(|_neighbour| {
-                self.cells[_neighbour.0][_neighbour.1] as u32 >= self.cells[position.0][position.1] as u32 - 1
+            .filter(|neighbour| {
+                self.cells[neighbour.0][neighbour.1] as u32 >= self.cells[position.0][position.1] as u32 - 1
             }).collect()
     }
 
@@ -102,6 +103,6 @@ abcryxxl
 accszExk
 acctuvwj
 abdefghi
-".to_string()), 31);
+".to_string()), 29);
 }
 
