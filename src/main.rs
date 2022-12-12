@@ -1,9 +1,10 @@
 use std::fs;
 use std::time::Instant;
-use itertools::{Itertools};
+use itertools::Itertools;
 
 type Position = (usize, usize); // (line, column)
 
+#[derive(Debug)]
 struct Hill {
     target: Position,
     cells: Vec<Vec<char>>,
@@ -25,37 +26,37 @@ fn main() {
 fn execute(input: &String) -> usize {
     let mut hill = Hill::parse(input);
     hill.explore(vec![hill.target], 0);
-    all_positions(hill.height(), hill.width()).iter()
-        .filter(|position| hill.cells[position.0][position.1] == 'a')
+    hill.positions_of('a').iter()
         .filter_map(|position| hill.distances[position.0][position.1])
         .min().unwrap()
 }
 
 impl Hill {
     fn parse(input: &String) -> Hill {
-        let mut cells = input.lines()
+        let cells = input.lines()
             .map(|line| line.chars().collect::<Vec<char>>())
             .collect::<Vec<Vec<char>>>();
         let distances = (0..cells.len()).map(|_| (0..cells[0].len()).map(|_| None).collect()).collect();
-        let start = Self::position_of(&cells, 'S').unwrap();
-        let target = Self::position_of(&cells, 'E').unwrap();
-        cells[target.0][target.1] = 'z';
-        cells[start.0][start.1] = 'a';
-        Hill {
-            target,
+        let mut hill = Hill {
+            target: (0, 0),
             cells,
             distances,
-        }
+        };
+        let start = *hill.positions_of('S').last().unwrap();
+        hill.target = *hill.positions_of('E').last().unwrap();
+        hill.cells[hill.target.0][hill.target.1] = 'z';
+        hill.cells[start.0][start.1] = 'a';
+        hill
     }
 
-    fn position_of(cells: &Vec<Vec<char>>, x: char) -> Option<Position> {
-        all_positions(cells.len(), cells[0].len()).into_iter()
-            .filter(|position| cells[position.0][position.1] == x)
-            .last()
+    fn positions_of(&self, x: char) -> Vec<Position> {
+        all_positions(self.cells.len(), self.cells[0].len()).into_iter()
+            .filter(|position| self.cells[position.0][position.1] == x)
+            .collect()
     }
 
     fn explore(&mut self, positions: Vec<Position>, distance: usize) {
-        let mut neighbours: Vec<Position> = vec![];
+        let mut positions_to_reevaluate: Vec<Position> = vec![];
         positions.iter().unique().for_each(|position| {
             let best_path_found = match self.distances[position.0][position.1] {
                 None => true,
@@ -63,11 +64,11 @@ impl Hill {
             };
             if best_path_found {
                 self.distances[position.0][position.1] = Some(distance);
-                neighbours.append(&mut self.get_reachable_neighbours(position));
+                positions_to_reevaluate.append(&mut self.get_reachable_neighbours(position));
             }
         });
-        if neighbours.len() > 0 {
-            self.explore(neighbours, distance + 1);
+        if positions_to_reevaluate.len() > 0 {
+            self.explore(positions_to_reevaluate, distance + 1);
         }
     }
 
@@ -89,14 +90,6 @@ impl Hill {
             .filter(|neighbour| {
                 self.cells[neighbour.0][neighbour.1] as u32 >= self.cells[position.0][position.1] as u32 - 1
             }).collect()
-    }
-
-    fn width(&self) -> usize {
-        self.cells[0].len()
-    }
-
-    fn height(&self) -> usize {
-        self.cells.len()
     }
 }
 
