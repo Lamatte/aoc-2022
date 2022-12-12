@@ -25,7 +25,7 @@ fn main() {
 fn execute(input: &String) -> usize {
     let mut hill = Hill::parse(input);
     hill.explore(vec![hill.target], 0);
-    Hill::all_positions(&hill.cells).iter()
+    all_positions(hill.height(), hill.width()).iter()
         .filter(|position| hill.cells[position.0][position.1] == 'a')
         .filter_map(|position| hill.distances[position.0][position.1])
         .min().unwrap()
@@ -49,7 +49,7 @@ impl Hill {
     }
 
     fn position_of(cells: &Vec<Vec<char>>, x: char) -> Option<Position> {
-        Hill::all_positions(cells).into_iter()
+        all_positions(cells.len(), cells[0].len()).into_iter()
             .filter(|position| cells[position.0][position.1] == x)
             .last()
     }
@@ -91,9 +91,17 @@ impl Hill {
             }).collect()
     }
 
-    fn all_positions(cells: &Vec<Vec<char>>) -> Vec<Position> {
-        (0..cells.len()).flat_map(|line| (0..cells[0].len()).into_iter().map(move |column| (line, column))).collect::<Vec<Position>>()
+    fn width(&self) -> usize {
+        self.cells[0].len()
     }
+
+    fn height(&self) -> usize {
+        self.cells.len()
+    }
+}
+
+fn all_positions(height: usize, width: usize) -> Vec<Position> {
+    (0..height).flat_map(|line| (0..width).into_iter().map(move |column| (line, column))).collect::<Vec<Position>>()
 }
 
 #[test]
