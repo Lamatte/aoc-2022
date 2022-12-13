@@ -32,15 +32,21 @@ fn main() {
 fn execute(input: Vec<(Val, Val)>) -> usize {
     input.iter()
         .flat_map(|(v1, v2)| vec![v1, v2])
-        .sorted_by(|v1, v2| v1.cmp(&v2))
+        .sorted()
         .enumerate()
         .filter(|(_, v)| **v == DIVIDER_1.clone() || **v == DIVIDER_2.clone())
         .map(|(i, _)| i + 1)
         .product()
 }
 
-impl Val {
-    fn cmp(&self, other: &Val) -> Ordering {
+impl PartialOrd<Self> for Val {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(&other))
+    }
+}
+
+impl Ord for Val {
+    fn cmp(&self, other: &Self) -> Ordering {
         match (self, other) {
             (Int(i1), Int(i2)) => {
                 i1.cmp(i2)
@@ -52,28 +58,34 @@ impl Val {
                 Vector(vec![(Int(*i1))]).cmp(v2)
             }
             (Vector(v1), Vector(v2)) => {
-                let mut res = Ordering::Equal;
-                for i in 0..min(v1.len(), v2.len()) {
-                    match v1[i].cmp(&v2[i]) {
-                        Ordering::Less => {
-                            res = Ordering::Less;
-                            break;
-                        }
-                        Ordering::Equal => {
-                            // Skip
-                        }
-                        Ordering::Greater => {
-                            res = Ordering::Greater;
-                            break;
-                        }
-                    }
+                Self::cmp_vectors(v1, v2)
+            }
+        }
+    }
+}
+
+impl Val {
+    fn cmp_vectors(v1: &Vec<Val>, v2: &Vec<Val>) -> Ordering {
+        let mut res = Ordering::Equal;
+        for i in 0..min(v1.len(), v2.len()) {
+            match v1[i].cmp(&v2[i]) {
+                Ordering::Less => {
+                    res = Ordering::Less;
+                    break;
                 }
-                if res == Ordering::Equal {
-                    v1.len().cmp(&v2.len())
-                } else {
-                    res
+                Ordering::Equal => {
+                    // Skip
+                }
+                Ordering::Greater => {
+                    res = Ordering::Greater;
+                    break;
                 }
             }
+        }
+        if res == Ordering::Equal {
+            v1.len().cmp(&v2.len())
+        } else {
+            res
         }
     }
 }
