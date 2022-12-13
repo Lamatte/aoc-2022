@@ -1,5 +1,7 @@
 use std::cmp::{min, Ordering};
 use std::time::Instant;
+use itertools::Itertools;
+use lazy_static::lazy_static;
 use Val::{Int, Vector};
 
 mod data;
@@ -8,6 +10,11 @@ mod data;
 enum Val {
     Int(u32),
     Vector(Vec<Val>),
+}
+
+lazy_static! {
+    static ref DIVIDER_1: Val = Vector(vec![Vector(vec![Int(2)])]);
+    static ref DIVIDER_2: Val = Vector(vec![Vector(vec![Int(6)])]);
 }
 
 fn main() {
@@ -24,12 +31,12 @@ fn main() {
 
 fn execute(input: Vec<(Val, Val)>) -> usize {
     input.iter()
-        .map(|(v1, v2)| v1.cmp(&v2))
+        .flat_map(|(v1, v2)| vec![v1, v2])
+        .sorted_by(|v1, v2| v1.cmp(&v2))
         .enumerate()
-        //.inspect(|(i, v)| eprintln!("{}: {:?}", i, v))
-        .filter(|(_, v)| *v == Ordering::Less)
+        .filter(|(_, v)| **v == DIVIDER_1.clone() || **v == DIVIDER_2.clone())
         .map(|(i, _)| i + 1)
-        .sum()
+        .product()
 }
 
 impl Val {
@@ -123,5 +130,5 @@ fn case_yy() {
 
 #[test]
 fn test_data() {
-    assert_eq!(execute(data::get_test_data()), 13);
+    assert_eq!(execute(data::get_test_data()), 140);
 }
