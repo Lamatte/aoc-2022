@@ -21,15 +21,17 @@ fn execute(input: &String) -> usize {
         .flat_map(|line| parse_path(line))
         .collect::<HashSet<(i32, i32)>>();
     print(&mut map);
+    let i = max_line(&mut &mut map);
     let mut count = 0;
     loop {
-        let position = add_sand(&mut map);
+        let position = add_sand(&mut map, i);
         match position {
             None => {
                 break;
             }
             Some(_) => {
                 count += 1;
+                //print(&mut map);
             }
         }
     }
@@ -37,8 +39,8 @@ fn execute(input: &String) -> usize {
 }
 
 fn print(mut map: &mut HashSet<(i32, i32)>) {
-    (0..max_line(&mut map) + 1).for_each(|line| {
-        let line_str: String = (min_column(&mut map)..max_column(&mut map) + 1).map(|column| if map.contains(&(line, column)) { '#' } else { '.' }).collect();
+    (0..max_line(&mut map) + 2).for_each(|line| {
+        let line_str: String = (min_column(&mut map)-10..max_column(&mut map) + 12).map(|column| if map.contains(&(line, column)) { '#' } else { '.' }).collect();
         eprintln!("{}", line_str);
     });
 }
@@ -55,11 +57,15 @@ fn max_line(map: &mut &mut HashSet<(i32, i32)>) -> i32 {
     *map.iter().map(|(line, _)| line).sorted().last().unwrap()
 }
 
-fn add_sand(mut map: &mut HashSet<(i32, i32)>) -> Option<(i32, i32)> {
+fn add_sand(mut map: &mut HashSet<(i32, i32)>, i: i32) -> Option<(i32, i32)> {
     let mut sand_position = (0, 500);
     loop {
-        if sand_position.0 >= max_line(&mut map) {
+        if map.contains(&(sand_position.0, sand_position.1)) {
             return None;
+        }
+        if sand_position.0 == i +1 {
+            map.insert(sand_position);
+            return Some(sand_position);
         }
         if !map.contains(&(sand_position.0 + 1, sand_position.1)) {
             sand_position.0 += 1;
@@ -75,7 +81,6 @@ fn add_sand(mut map: &mut HashSet<(i32, i32)>) -> Option<(i32, i32)> {
     }
     map.insert(sand_position);
     //eprintln!("{:?}", sand_position);
-    //print(&mut map);
     Some(sand_position)
 }
 
@@ -111,6 +116,6 @@ fn parse_path(line: &str) -> Vec<(i32, i32)> {
 fn test_data() {
     assert_eq!(execute(&r"498,4 -> 498,6 -> 496,6
 503,4 -> 502,4 -> 502,9 -> 494,9
-".to_string()), 24);
+".to_string()), 93);
 }
 
