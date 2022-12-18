@@ -1,24 +1,53 @@
+const BOX_SIZE: usize = 22 + 2;
+
 fn main() {
-    let r = execute(&get_input());
-    eprintln!("{}", r);
+    eprintln!("{}", execute(&get_input()));
 }
 
 fn execute(cubes: &Vec<(i32, i32, i32)>) -> usize {
-    let mut r = cubes.len() * 6;
-    for cube in 0..cubes.len() {
-        for other_cube in cube..cubes.len() {
-            if cubes[cube].0 == cubes[other_cube].0 && cubes[cube].1 == cubes[other_cube].1 && (cubes[cube].2 - cubes[other_cube].2).abs() == 1 {
-                r -= 2;
-            }
-            if cubes[cube].1 == cubes[other_cube].1 && cubes[cube].2 == cubes[other_cube].2 && (cubes[cube].0 - cubes[other_cube].0).abs() == 1 {
-                r -= 2;
-            }
-            if cubes[cube].2 == cubes[other_cube].2 && cubes[cube].0 == cubes[other_cube].0 && (cubes[cube].1 - cubes[other_cube].1).abs() == 1 {
-                r -= 2;
-            }
+    // Make sur we can find a path from "under" the cubes...
+    let cubes = &cubes.iter().map(|pos| (pos.0 +1, pos.1 +1, pos.2 +1)).collect();
+    let mut visited = [[[false; BOX_SIZE]; BOX_SIZE]; BOX_SIZE];
+    let mut count = 0;
+    visit(cubes, &vec![(0, 0, 0)], &mut visited, &mut count);
+    count
+}
+
+fn visit(cubes: &Vec<(i32, i32, i32)>, to_visit: &Vec<(i32, i32, i32)>, visited: &mut [[[bool; BOX_SIZE]; BOX_SIZE]; BOX_SIZE], count: &mut usize) {
+    let mut next_to_visit = vec![];
+    to_visit.iter().for_each(|pos| {
+        if !visited[pos.0 as usize][pos.1 as usize][pos.2 as usize] {
+            adjacent_positions(pos).iter().for_each(|pos| {
+                if cubes.contains(pos) {
+                    *count += 1;
+                }
+            });
+            visited[pos.0 as usize][pos.1 as usize][pos.2 as usize] = true;
+            next_to_visit.append(&mut neighbours(pos, cubes));
         }
+    });
+    if next_to_visit.len() > 0 {
+        visit(cubes, &next_to_visit, visited, count);
     }
-    r
+}
+
+fn neighbours(pos: &(i32, i32, i32), cubes: &Vec<(i32, i32, i32)>) -> Vec<(i32, i32, i32)> {
+    adjacent_positions(pos).into_iter()
+        .filter(|pos| is_within_box(pos) && !cubes.contains(pos))
+        .collect()
+}
+
+fn is_within_box(pos: &(i32, i32, i32)) -> bool {
+    pos.0 >= 0 && pos.1 >= 0 && pos.2 >= 0 && pos.0 < BOX_SIZE as i32 && pos.1 < BOX_SIZE as i32 && pos.2 < BOX_SIZE as i32
+}
+
+fn adjacent_positions(pos: &(i32, i32, i32)) -> Vec<(i32, i32, i32)> {
+    vec![(pos.0 - 1, pos.1, pos.2),
+         (pos.0, pos.1 - 1, pos.2),
+         (pos.0, pos.1, pos.2 - 1),
+         (pos.0 + 1, pos.1, pos.2),
+         (pos.0, pos.1 + 1, pos.2),
+         (pos.0, pos.1, pos.2 + 1)]
 }
 
 #[test]
@@ -28,7 +57,7 @@ fn test_data() {
 
 #[test]
 fn test_data2() {
-    assert_eq!(execute(&vec![(2,2,2), (1,2,2), (3,2,2), (2,1,2), (2,3,2), (2,2,1), (2,2,3), (2,2,4), (2,2,6), (1,2,5), (3,2,5), (2,1,5), (2,3,5)]), 64);
+    assert_eq!(execute(&vec![(2, 2, 2), (1, 2, 2), (3, 2, 2), (2, 1, 2), (2, 3, 2), (2, 2, 1), (2, 2, 3), (2, 2, 4), (2, 2, 6), (1, 2, 5), (3, 2, 5), (2, 1, 5), (2, 3, 5)]), 58);
 }
 
 fn get_input() -> Vec<(i32, i32, i32)> {
