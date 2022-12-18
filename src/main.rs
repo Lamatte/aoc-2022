@@ -1,19 +1,23 @@
+use std::collections::HashSet;
+
 const BOX_SIZE: usize = 22 + 2;
+
+type Position = (i32, i32, i32);
 
 fn main() {
     eprintln!("{}", execute(&get_input()));
 }
 
-fn execute(cubes: &Vec<(i32, i32, i32)>) -> usize {
+fn execute(cubes: &Vec<Position>) -> usize {
     // Make sur we can find a path from "under" the cubes...
-    let cubes = &cubes.iter().map(|pos| (pos.0 +1, pos.1 +1, pos.2 +1)).collect();
+    let cubes = &cubes.iter().map(|pos| (pos.0 +1, pos.1 +1, pos.2 +1)).collect::<HashSet<Position>>();
     let mut visited = [[[false; BOX_SIZE]; BOX_SIZE]; BOX_SIZE];
     let mut count = 0;
     visit(cubes, &vec![(0, 0, 0)], &mut visited, &mut count);
     count
 }
 
-fn visit(cubes: &Vec<(i32, i32, i32)>, to_visit: &Vec<(i32, i32, i32)>, visited: &mut [[[bool; BOX_SIZE]; BOX_SIZE]; BOX_SIZE], count: &mut usize) {
+fn visit(cubes: &HashSet<Position>, to_visit: &Vec<Position>, visited: &mut [[[bool; BOX_SIZE]; BOX_SIZE]; BOX_SIZE], count: &mut usize) {
     let mut next_to_visit = vec![];
     to_visit.iter().for_each(|pos| {
         if !visited[pos.0 as usize][pos.1 as usize][pos.2 as usize] {
@@ -31,17 +35,17 @@ fn visit(cubes: &Vec<(i32, i32, i32)>, to_visit: &Vec<(i32, i32, i32)>, visited:
     }
 }
 
-fn neighbours(pos: &(i32, i32, i32), cubes: &Vec<(i32, i32, i32)>) -> Vec<(i32, i32, i32)> {
+fn neighbours(pos: &Position, cubes: &HashSet<Position>) -> Vec<Position> {
     adjacent_positions(pos).into_iter()
         .filter(|pos| is_within_box(pos) && !cubes.contains(pos))
         .collect()
 }
 
-fn is_within_box(pos: &(i32, i32, i32)) -> bool {
+fn is_within_box(pos: &Position) -> bool {
     pos.0 >= 0 && pos.1 >= 0 && pos.2 >= 0 && pos.0 < BOX_SIZE as i32 && pos.1 < BOX_SIZE as i32 && pos.2 < BOX_SIZE as i32
 }
 
-fn adjacent_positions(pos: &(i32, i32, i32)) -> Vec<(i32, i32, i32)> {
+fn adjacent_positions(pos: &Position) -> Vec<Position> {
     vec![(pos.0 - 1, pos.1, pos.2),
          (pos.0, pos.1 - 1, pos.2),
          (pos.0, pos.1, pos.2 - 1),
@@ -60,7 +64,7 @@ fn test_data2() {
     assert_eq!(execute(&vec![(2, 2, 2), (1, 2, 2), (3, 2, 2), (2, 1, 2), (2, 3, 2), (2, 2, 1), (2, 2, 3), (2, 2, 4), (2, 2, 6), (1, 2, 5), (3, 2, 5), (2, 1, 5), (2, 3, 5)]), 58);
 }
 
-fn get_input() -> Vec<(i32, i32, i32)> {
+fn get_input() -> Vec<Position> {
     vec![
         (14, 5, 6),
         (12, 4, 14),
