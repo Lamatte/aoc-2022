@@ -6,7 +6,7 @@ type Position = (i32, i32, i32);
 
 struct Grid {
     cubes: HashSet<Position>,
-    visited: [[[bool; BOX_SIZE]; BOX_SIZE]; BOX_SIZE],
+    surface: usize,
 }
 
 fn main() {
@@ -14,35 +14,38 @@ fn main() {
 }
 
 fn execute(cubes: &Vec<Position>) -> usize {
-    Grid::new(cubes).get_surface()
+    let grid = Grid::new(cubes);
+    grid.surface
 }
 
 impl Grid {
     fn new(cubes: &Vec<Position>) -> Grid {
-        Grid {
+        let mut result = Grid {
             // Make sur we can find a path from "under" the cubes...
             cubes: cubes.iter().map(|pos| (pos.0 + 1, pos.1 + 1, pos.2 + 1)).collect::<HashSet<Position>>(),
-            visited: [[[false; BOX_SIZE]; BOX_SIZE]; BOX_SIZE],
-        }
+            surface: 0,
+        };
+        result.compute_surface();
+        result
     }
 
-    fn get_surface(&mut self) -> usize {
-        let mut surface = 0;
-        self.visit(&vec![(0, 0, 0)], &mut surface);
-        surface
+    fn compute_surface(&mut self) {
+        self.surface = 0;
+        let mut visited = [[[false; BOX_SIZE]; BOX_SIZE]; BOX_SIZE];
+        self.visit(&vec![(0, 0, 0)], &mut visited);
     }
 
-    fn visit(&mut self, to_visit: &Vec<Position>, surface: &mut usize) {
+    fn visit(&mut self, to_visit: &Vec<Position>, visited: &mut [[[bool; BOX_SIZE]; BOX_SIZE]; BOX_SIZE]) {
         let mut next_to_visit = vec![];
         to_visit.iter().for_each(|pos| {
-            if !self.visited[pos.0 as usize][pos.1 as usize][pos.2 as usize] {
-                *surface += self.adjacent_cubes_count(pos);
-                self.visited[pos.0 as usize][pos.1 as usize][pos.2 as usize] = true;
+            if !visited[pos.0 as usize][pos.1 as usize][pos.2 as usize] {
+                self.surface += self.adjacent_cubes_count(pos);
+                visited[pos.0 as usize][pos.1 as usize][pos.2 as usize] = true;
                 next_to_visit.append(&mut self.get_accessible_positions_from(pos));
             }
         });
         if next_to_visit.len() > 0 {
-            self.visit(&next_to_visit, surface);
+            self.visit(&next_to_visit, visited);
         }
     }
 
