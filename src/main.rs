@@ -4,41 +4,59 @@ const BOX_SIZE: usize = 22 + 2;
 
 type Position = (i32, i32, i32);
 
+struct Grid {
+    cubes: HashSet<Position>,
+    visited: [[[bool; BOX_SIZE]; BOX_SIZE]; BOX_SIZE],
+}
+
 fn main() {
     eprintln!("{}", execute(&get_input()));
 }
 
 fn execute(cubes: &Vec<Position>) -> usize {
-    // Make sur we can find a path from "under" the cubes...
-    let cubes = &cubes.iter().map(|pos| (pos.0 +1, pos.1 +1, pos.2 +1)).collect::<HashSet<Position>>();
-    let mut visited = [[[false; BOX_SIZE]; BOX_SIZE]; BOX_SIZE];
-    let mut count = 0;
-    visit(cubes, &vec![(0, 0, 0)], &mut visited, &mut count);
-    count
+    Grid::new(cubes).get_surface()
 }
 
-fn visit(cubes: &HashSet<Position>, to_visit: &Vec<Position>, visited: &mut [[[bool; BOX_SIZE]; BOX_SIZE]; BOX_SIZE], count: &mut usize) {
-    let mut next_to_visit = vec![];
-    to_visit.iter().for_each(|pos| {
-        if !visited[pos.0 as usize][pos.1 as usize][pos.2 as usize] {
-            adjacent_positions(pos).iter().for_each(|pos| {
-                if cubes.contains(pos) {
-                    *count += 1;
-                }
-            });
-            visited[pos.0 as usize][pos.1 as usize][pos.2 as usize] = true;
-            next_to_visit.append(&mut neighbours(pos, cubes));
+impl Grid {
+    fn new(cubes: &Vec<Position>) -> Grid {
+        Grid {
+            // Make sur we can find a path from "under" the cubes...
+            cubes: cubes.iter().map(|pos| (pos.0 + 1, pos.1 + 1, pos.2 + 1)).collect::<HashSet<Position>>(),
+            visited: [[[false; BOX_SIZE]; BOX_SIZE]; BOX_SIZE],
         }
-    });
-    if next_to_visit.len() > 0 {
-        visit(cubes, &next_to_visit, visited, count);
     }
-}
 
-fn neighbours(pos: &Position, cubes: &HashSet<Position>) -> Vec<Position> {
-    adjacent_positions(pos).into_iter()
-        .filter(|pos| is_within_box(pos) && !cubes.contains(pos))
-        .collect()
+    fn get_surface(&mut self) -> usize {
+        let mut surface = 0;
+        self.visit(&vec![(0, 0, 0)], &mut surface);
+        surface
+    }
+
+    fn visit(&mut self, to_visit: &Vec<Position>, surface: &mut usize) {
+        let mut next_to_visit = vec![];
+        to_visit.iter().for_each(|pos| {
+            if !self.visited[pos.0 as usize][pos.1 as usize][pos.2 as usize] {
+                *surface += self.adjacent_cubes_count(pos);
+                self.visited[pos.0 as usize][pos.1 as usize][pos.2 as usize] = true;
+                next_to_visit.append(&mut self.get_accessible_positions_from(pos));
+            }
+        });
+        if next_to_visit.len() > 0 {
+            self.visit(&next_to_visit, surface);
+        }
+    }
+
+    fn adjacent_cubes_count(&self, pos: &Position) -> usize {
+        adjacent_positions(pos).iter()
+            .filter(|pos| self.cubes.contains(pos))
+            .count()
+    }
+
+    fn get_accessible_positions_from(&self, pos: &Position) -> Vec<Position> {
+        adjacent_positions(pos).into_iter()
+            .filter(|pos| is_within_box(pos) && !self.cubes.contains(pos))
+            .collect()
+    }
 }
 
 fn is_within_box(pos: &Position) -> bool {
